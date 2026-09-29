@@ -8,6 +8,7 @@ import type { Transaction } from '../../data/types'
 import { useLedger } from '../../composables/useLedger'
 import { formatRelativeDate, formatSignedAmount } from '../../data/format'
 import CategoryAvatar from './CategoryAvatar.vue'
+import AmountText from '../ui/AmountText.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -44,7 +45,7 @@ const typeText = computed(() => (isIncome.value ? '收入' : '支出'))
     </div>
     <div class="right">
       <strong class="amount numeric" :class="isIncome ? 'tone-income' : 'tone-expense'">
-        {{ formatSignedAmount(transaction.type, transaction.amount) }}
+        <AmountText :text="formatSignedAmount(transaction.type, transaction.amount)" />
       </strong>
       <span v-if="showDate" class="date">{{ formatRelativeDate(transaction.date) }}</span>
     </div>
@@ -130,12 +131,14 @@ const typeText = computed(() => (isIncome.value ? '收入' : '支出'))
   flex-direction: column;
   align-items: flex-end;
   gap: var(--space-1);
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-width: 52%;
+  min-width: 0;
 }
 .amount {
   font-size: var(--type-title-small-size);
   font-weight: 650;
-  white-space: nowrap;
+  max-width: 100%;
 }
 .date {
   font: var(--type-body-small-size) / 1.3 var(--font-sans);

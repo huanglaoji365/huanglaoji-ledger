@@ -9,6 +9,7 @@ import { NAV_ITEMS } from './navigation'
 import { useLedger } from '../../composables/useLedger'
 import { formatAmount } from '../../data/format'
 import BrandMark from './BrandMark.vue'
+import UserMenu from './UserMenu.vue'
 import AppIcon from '../ui/AppIcon.vue'
 
 const route = useRoute()
@@ -45,6 +46,7 @@ const netWorthText = computed(() => formatAmount(netWorth.value))
     </nav>
 
     <div class="footer">
+      <UserMenu variant="chip" />
       <div class="net-worth" role="group" aria-label="净资产">
         <AppIcon name="trend-up" :size="16" aria-hidden="true" />
         <span class="nw-label">净资产</span>
@@ -125,7 +127,10 @@ const netWorthText = computed(() => formatAmount(netWorth.value))
 
 .footer {
   border-top: 1px solid var(--color-outline-variant);
-  padding-top: var(--space-4);
+  padding-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 .net-worth {
   display: flex;

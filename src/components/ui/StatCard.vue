@@ -24,6 +24,15 @@ const deltaTone = computed(() => {
   if (props.delta == null) return ''
   return props.delta >= 0 ? 'up' : 'down'
 })
+
+/** 长金额自动缩小字号（配合 cqi 基准） */
+const valueShrink = computed(() => {
+  const len = props.value.length
+  if (len <= 8) return 1
+  if (len <= 11) return 0.85
+  if (len <= 14) return 0.72
+  return 0.6
+})
 </script>
 
 <template>
@@ -36,7 +45,9 @@ const deltaTone = computed(() => {
         <span class="sr-only">{{ delta >= 0 ? '上升' : '下降' }}</span>
       </span>
     </div>
-    <div class="value numeric" :aria-label="`${label} ${value}`">{{ value }}</div>
+    <div class="value numeric" :style="{ '--vshrink': valueShrink }" :aria-label="`${label} ${value}`" :title="value">
+      {{ value }}
+    </div>
     <div v-if="sub" class="sub">{{ sub }}</div>
     <div v-else-if="deltaLabel" class="sub">{{ deltaLabel }}</div>
     <div v-if="$slots.default" class="extra">
@@ -94,7 +105,7 @@ const deltaTone = computed(() => {
 }
 
 .value {
-  font-size: clamp(22px, 8cqi, 30px);
+  font-size: calc(clamp(22px, 8cqi, 30px) * var(--vshrink, 1));
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: -0.3px;

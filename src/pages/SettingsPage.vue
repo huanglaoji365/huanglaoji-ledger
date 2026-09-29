@@ -3,12 +3,13 @@
  * Settings 设置 — 外观 / 数据 / 关于
  */
 import { computed, ref } from 'vue'
-import { useUi, type ThemeMode, type ThemeHue, THEME_HUES } from '../composables/useUi'
+import { useUi, type ThemeMode, DEFAULT_HUE } from '../composables/useUi'
 import { useLedger } from '../composables/useLedger'
 import PageHeader from '../components/layout/PageHeader.vue'
 import AppCard from '../components/ui/AppCard.vue'
 import AppButton from '../components/ui/AppButton.vue'
 import SegmentedControl from '../components/ui/SegmentedControl.vue'
+import ThemeHuePicker from '../components/ui/ThemeHuePicker.vue'
 import Modal from '../components/ui/Modal.vue'
 import AppIcon from '../components/ui/AppIcon.vue'
 
@@ -22,7 +23,7 @@ const theme = computed({
 
 const hue = computed({
   get: () => ui.state.hue,
-  set: (v: string) => ui.setHue(v as ThemeHue),
+  set: (v: number) => ui.setHue(v),
 })
 
 function download(name: string, content: string, mime: string) {
@@ -79,26 +80,10 @@ function doReset() {
       <hr class="divider" />
       <div class="row">
         <div class="row-text">
-          <p class="row-title">主题色</p>
-          <p class="row-desc">品牌色相全局即时生效，表面色随之协调变化。</p>
+          <p class="row-title">主题色相</p>
+          <p class="row-desc">拖动滑块调整品牌色相（0–360°），主色、容器与表面色全局即时联动；点击 ⟳ 恢复默认。</p>
         </div>
-        <div class="swatches" role="radiogroup" aria-label="主题色">
-          <button
-            v-for="h in THEME_HUES"
-            :key="h.id"
-            type="button"
-            class="swatch"
-            :class="{ active: hue === h.id }"
-            role="radio"
-            :aria-checked="hue === h.id"
-            :aria-label="h.name"
-            :title="h.name"
-            :style="{ background: h.color, color: h.check }"
-            @click="hue = h.id"
-          >
-            <AppIcon v-if="hue === h.id" name="check" :size="14" />
-          </button>
-        </div>
+        <ThemeHuePicker v-model="hue" :default-hue="DEFAULT_HUE" class="hue-row" />
       </div>
     </AppCard>
 
@@ -208,34 +193,8 @@ function doReset() {
   border-top: 1px solid var(--color-outline-variant);
 }
 
-.swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-.swatch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: none;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
-  transition:
-    transform var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard);
-}
-@media (hover: hover) {
-  .swatch:hover {
-    transform: scale(1.08);
-  }
-}
-.swatch.active {
-  box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 0.06),
-    0 0 0 2px var(--color-surface-container-low),
-    0 0 0 4px var(--color-on-surface-variant);
+.hue-row {
+  max-width: 320px;
 }
 
 .about-name {

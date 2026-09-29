@@ -8,6 +8,7 @@ import { useRoute } from 'vue-router'
 import { PAGE_TITLES } from './navigation'
 import { useUi, type ThemeMode } from '../../composables/useUi'
 import BrandMark from './BrandMark.vue'
+import UserMenu from './UserMenu.vue'
 import AppIcon from '../ui/AppIcon.vue'
 import AppTooltip from '../ui/AppTooltip.vue'
 
@@ -43,6 +44,7 @@ const cycleTheme = () => setTheme(NEXT_THEME[state.theme])
           <AppIcon :name="themeIcon" :size="20" />
         </button>
       </AppTooltip>
+      <UserMenu variant="icon" />
       <slot name="actions" />
     </div>
   </header>

@@ -122,7 +122,7 @@ function doDelete() {
       <div class="overall-grid">
         <div class="overall-info">
           <span class="overall-label">本月预算执行</span>
-          <p class="overall-value numeric">
+          <p class="overall-value numeric" :title="`${formatAmount(totalSpent)} / ${formatAmount(totalBudget)}`">
             {{ formatAmount(totalSpent) }} <span class="of">/ {{ formatAmount(totalBudget) }}</span>
           </p>
           <p class="overall-sub">
@@ -209,6 +209,9 @@ function doDelete() {
   font-weight: 650;
   letter-spacing: -0.4px;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .overall-value .of {
   font-size: 0.55em;

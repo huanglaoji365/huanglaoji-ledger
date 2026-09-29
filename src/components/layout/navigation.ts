@@ -29,4 +29,5 @@ export const PAGE_TITLES: Record<string, string> = {
   '/accounts': '账户管理',
   '/categories': '分类管理',
   '/settings': '设置',
+  '/profile': '个人信息',
 }

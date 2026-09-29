@@ -7,18 +7,8 @@ import type { Transaction } from '../data/types'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
-export type ThemeHue = 'amber' | 'ocean' | 'forest' | 'aqua' | 'violet' | 'wine' | 'graphite'
-
-/** 主题色预设（swatch 展示色 / 勾选对比色） */
-export const THEME_HUES: { id: ThemeHue; name: string; color: string; check: string }[] = [
-  { id: 'amber', name: '暖金', color: '#e8bf55', check: '#3f2e00' },
-  { id: 'ocean', name: '海蓝', color: '#3f62b3', check: '#ffffff' },
-  { id: 'forest', name: '翠绿', color: '#2b7d54', check: '#ffffff' },
-  { id: 'aqua', name: '天青', color: '#2a7f92', check: '#ffffff' },
-  { id: 'violet', name: '紫罗兰', color: '#6f57ad', check: '#ffffff' },
-  { id: 'wine', name: '酒红', color: '#a83e45', check: '#ffffff' },
-  { id: 'graphite', name: '石墨', color: '#5b5d66', check: '#ffffff' },
-]
+/** 主题色相（0–360，OKLCH 实时派生全局品牌色） */
+export const DEFAULT_HUE = 75
 
 export interface Toast {
   id: number
@@ -29,7 +19,7 @@ export interface Toast {
 
 interface UiState {
   theme: ThemeMode
-  hue: ThemeHue
+  hue: number
   addSheetOpen: boolean
   /** 当前正在编辑的交易（null 表示新增） */
   editing: Transaction | null
@@ -45,9 +35,9 @@ function initialTheme(): ThemeMode {
   return 'system'
 }
 
-function initialHue(): ThemeHue {
-  const saved = localStorage.getItem(HUE_KEY) as ThemeHue | null
-  return saved && THEME_HUES.some((h) => h.id === saved) ? saved : 'amber'
+function initialHue(): number {
+  const saved = Number(localStorage.getItem(HUE_KEY))
+  return Number.isFinite(saved) && saved >= 0 && saved <= 360 ? saved : DEFAULT_HUE
 }
 
 const state = reactive<UiState>({
@@ -69,13 +59,8 @@ function applyTheme(mode: ThemeMode) {
   }
 }
 
-function applyHue(hue: ThemeHue) {
-  const root = document.documentElement
-  if (hue === 'amber') {
-    delete root.dataset.hue
-  } else {
-    root.dataset.hue = hue
-  }
+function applyHue(hue: number) {
+  document.documentElement.style.setProperty('--hue', String(hue))
 }
 
 applyTheme(state.theme)
@@ -87,10 +72,11 @@ function setTheme(mode: ThemeMode) {
   applyTheme(mode)
 }
 
-function setHue(hue: ThemeHue) {
-  state.hue = hue
-  localStorage.setItem(HUE_KEY, hue)
-  applyHue(hue)
+function setHue(hue: number) {
+  const h = Math.round(Math.min(360, Math.max(0, hue)))
+  state.hue = h
+  localStorage.setItem(HUE_KEY, String(h))
+  applyHue(h)
 }
 
 function openAddSheet() {

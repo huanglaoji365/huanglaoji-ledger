@@ -18,6 +18,8 @@ const props = defineProps<{
   modelValue: string
   label: string
   block?: boolean
+  /** 强制满宽（任何断点都拉伸为容器宽度，如认证卡片） */
+  forceFull?: boolean
 }>()
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -49,7 +51,7 @@ function onKeydown(e: KeyboardEvent) {
   <div
     ref="groupRef"
     class="segmented"
-    :class="{ block }"
+    :class="{ block, 'force-full': forceFull }"
     role="radiogroup"
     :aria-label="label"
     @keydown="onKeydown"
@@ -106,17 +108,18 @@ function onKeydown(e: KeyboardEvent) {
   background: var(--color-secondary-container);
   color: var(--color-on-secondary-container);
 }
-.segment.block {
+.segmented.block .segment {
   flex: 1;
 }
 @media (min-width: 600px) {
-  /* PC / Tablet：分段按钮收缩为内容宽度并左对齐，不再拉成满宽色块 */
-  .segmented.block {
+  /* PC / Tablet：分段按钮收缩为内容宽度并左对齐，不再拉成满宽色块
+     force-full 例外：认证卡片等场景保持满宽均分 */
+  .segmented.block:not(.force-full) {
     display: inline-flex;
     width: fit-content;
     align-self: flex-start;
   }
-  .segment.block {
+  .segmented.block:not(.force-full) .segment {
     flex: 0 0 auto;
     min-width: 120px;
     padding: 0 var(--space-5);

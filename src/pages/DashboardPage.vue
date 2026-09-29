@@ -86,6 +86,15 @@ const legendItems = computed<LegendEntry[]>(() => {
 
 const recent = computed(() => ledger.recentTransactions(5))
 
+/** hero 长金额缩字号 */
+const heroShrink = computed(() => {
+  const len = formatAmount(totals.value.balance).length
+  if (len <= 10) return 1
+  if (len <= 13) return 0.85
+  if (len <= 16) return 0.72
+  return 0.6
+})
+
 const monthTxCount = computed(() => {
   const list = ledger.transactionsInMonth(month.value)
   return {
@@ -113,7 +122,12 @@ const monthTxCount = computed(() => {
             较上月 {{ Math.abs(balanceDelta).toFixed(1) }}%
           </span>
         </div>
-        <p class="hero-value numeric" :aria-label="`本月结余 ${formatAmount(totals.balance)}`">
+        <p
+          class="hero-value numeric"
+          :style="{ '--vshrink': heroShrink }"
+          :aria-label="`本月结余 ${formatAmount(totals.balance)}`"
+          :title="formatAmount(totals.balance)"
+        >
           {{ formatAmount(totals.balance) }}
         </p>
         <p class="hero-sub">
@@ -250,10 +264,13 @@ const monthTxCount = computed(() => {
 
 .hero-value {
   margin-top: var(--space-2);
-  font-size: clamp(34px, 9cqi, 44px);
+  font-size: calc(clamp(34px, 9cqi, 44px) * var(--vshrink, 1));
   font-weight: 650;
   line-height: 1.15;
   letter-spacing: -0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .hero-sub {
   margin-top: var(--space-1);

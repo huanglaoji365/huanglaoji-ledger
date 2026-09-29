@@ -13,8 +13,9 @@ const currencyInt = new Intl.NumberFormat('zh-CN', {
   maximumFractionDigits: 0,
 })
 
-/** ¥1,234.56 */
+/** ¥1,234.56；负数输出 -¥1,234.56 */
 export function formatAmount(value: number): string {
+  if (value < 0) return `-¥${currency.format(-value)}`
   return `¥${currency.format(value)}`
 }
 

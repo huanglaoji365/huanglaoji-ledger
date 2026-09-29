@@ -7,6 +7,7 @@ import { computed } from 'vue'
 import type { Account } from '../../data/types'
 import { formatAmount } from '../../data/format'
 import AppIcon from '../ui/AppIcon.vue'
+import AmountText from '../ui/AmountText.vue'
 
 const props = defineProps<{
   account: Account
@@ -41,7 +42,9 @@ const balanceText = computed(() =>
       <IconButton icon="pencil" label="编辑账户" variant="standard" size="sm" @click.stop="emit('edit')" />
     </header>
     <div class="balance-row">
-      <strong class="balance numeric" :class="{ debt: isDebt }">{{ balanceText }}</strong>
+      <strong class="balance numeric" :class="{ debt: isDebt }" :title="balanceText">
+        <AmountText :text="balanceText" />
+      </strong>
       <span v-if="isDebt" class="debt-tag" aria-hidden="false">负债</span>
     </div>
     <footer class="footer">
@@ -106,12 +109,15 @@ const balanceText = computed(() =>
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
+  min-width: 0;
 }
 .balance {
   font-size: var(--type-title-large-size);
   font-weight: 650;
   letter-spacing: -0.2px;
   color: var(--color-on-surface);
+  min-width: 0;
+  max-width: 100%;
 }
 .balance.debt {
   color: var(--color-expense);

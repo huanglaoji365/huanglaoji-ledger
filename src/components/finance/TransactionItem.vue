@@ -9,6 +9,7 @@ import { useLedger } from '../../composables/useLedger'
 import { formatRelativeDate, formatSignedAmount } from '../../data/format'
 import CategoryAvatar from './CategoryAvatar.vue'
 import AppIcon from '../ui/AppIcon.vue'
+import AmountText from '../ui/AmountText.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -55,7 +56,7 @@ const typeTone = computed(() => (isIncome.value ? 'income' : 'expense'))
     </div>
     <div class="amount-col">
       <strong class="amount numeric" :class="`tone-${typeTone}`" :aria-label="`${typeText} ${amountText}`">
-        {{ amountText }}
+        <AmountText :text="amountText" />
       </strong>
       <span v-if="showDate" class="sr-only">{{ formatRelativeDate(transaction.date) }}</span>
     </div>
@@ -137,8 +138,13 @@ const typeTone = computed(() => (isIncome.value ? 'income' : 'expense'))
 }
 
 .amount-col {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-width: 48%;
+  min-width: 0;
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 .amount {
   font-size: var(--type-title-small-size);

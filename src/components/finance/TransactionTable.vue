@@ -12,6 +12,7 @@ import CategoryAvatar from './CategoryAvatar.vue'
 import IconButton from '../ui/IconButton.vue'
 import EmptyState from '../ui/EmptyState.vue'
 import AppIcon from '../ui/AppIcon.vue'
+import AmountText from '../ui/AmountText.vue'
 
 const props = defineProps<{
   transactions: Transaction[]
@@ -91,7 +92,7 @@ const typeText = (t: Transaction) => (t.type === 'income' ? '收入' : '支出')
           </td>
           <td class="amount-cell">
             <strong class="numeric" :class="t.type === 'income' ? 'tone-income' : 'tone-expense'">
-              {{ formatSignedAmount(t.type, t.amount) }}
+              <AmountText :text="formatSignedAmount(t.type, t.amount)" />
             </strong>
           </td>
           <td class="action-cell">
@@ -201,8 +202,12 @@ td {
   background: color-mix(in srgb, var(--color-expense) 12%, transparent);
 }
 .amount-cell strong {
+  display: inline-block;
+  max-width: 180px;
+  min-width: 0;
   font-size: var(--type-body-large-size);
   font-weight: 650;
+  vertical-align: middle;
 }
 .num {
   text-align: right;

@@ -187,9 +187,7 @@ function exportCsv() {
     <!-- 摘要 -->
     <div class="summary numeric" aria-live="polite">
       <span class="sum-item">收入 <strong class="tone-income">{{ formatAmount(summary.income) }}</strong></span>
-      <span class="divider" aria-hidden="true">·</span>
       <span class="sum-item">支出 <strong class="tone-expense">{{ formatAmount(summary.expense) }}</strong></span>
-      <span class="divider" aria-hidden="true">·</span>
       <span class="sum-item">结余 <strong>{{ formatAmount(summary.income - summary.expense) }}</strong></span>
     </div>
 
@@ -278,23 +276,32 @@ function exportCsv() {
 
 .summary {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  column-gap: var(--space-2);
+  row-gap: var(--space-1);
   padding: 0 var(--space-1);
   font: var(--type-body-medium-size) / 1.6 var(--font-sans);
   color: var(--color-on-surface-variant);
 }
+/* 分隔符跟随各自条目折行，避免行首孤立 · */
+.sum-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+.sum-item + .sum-item::before {
+  content: '·';
+  margin-right: var(--space-2);
+  opacity: 0.5;
+}
 .sum-item strong {
   font-size: var(--type-body-large-size);
   font-weight: 650;
-  margin-left: var(--space-1);
 }
 .tone-income { color: var(--color-income); }
 .tone-expense { color: var(--color-expense); }
-.divider {
-  opacity: 0.5;
-}
 
 .more {
   display: flex;

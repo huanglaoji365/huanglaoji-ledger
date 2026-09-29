@@ -3,7 +3,7 @@
  * AppInput — 填充式文本输入（浮动 label）
  * 状态：hover / focused / disabled / error，带 aria 属性。
  */
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, useSlots } from 'vue'
 
 const props = withDefaults(
   defineProps<{
@@ -30,9 +30,17 @@ const props = withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
+const slots = useSlots()
+
 const id = `in-${Math.random().toString(36).slice(2, 8)}`
+const inputEl = ref<HTMLInputElement | null>(null)
 const focused = ref(false)
 const floating = computed(() => focused.value || props.modelValue.length > 0)
+
+// 浏览器 autofocus 可能早于事件绑定，挂载后校准一次
+onMounted(() => {
+  if (document.activeElement === inputEl.value) focused.value = true
+})
 
 const onInput = (e: Event) => {
   emit('update:modelValue', (e.target as HTMLInputElement).value)
@@ -42,22 +50,29 @@ const onInput = (e: Event) => {
 <template>
   <div class="field" :class="{ focused, error: !!error, disabled }">
     <label :for="id" class="label" :class="{ floating }">{{ label }}</label>
-    <input
-      :id="id"
-      class="input"
-      :type="type"
-      :value="modelValue"
-      :placeholder="floating ? placeholder : ''"
-      :disabled="disabled || undefined"
-      :maxlength="maxlength"
-      :autofocus="autofocus"
-      :inputmode="inputmode"
-      :aria-invalid="!!error || undefined"
-      :aria-describedby="error ? `${id}-err` : undefined"
-      @input="onInput"
-      @focus="focused = true"
-      @blur="focused = false"
-    />
+    <div class="input-row">
+      <input
+        :id="id"
+        ref="inputEl"
+        class="input"
+        :class="{ 'with-suffix': !!slots.suffix }"
+        :type="type"
+        :value="modelValue"
+        :placeholder="floating ? placeholder : ''"
+        :disabled="disabled || undefined"
+        :maxlength="maxlength"
+        :autofocus="autofocus"
+        :inputmode="inputmode"
+        :aria-invalid="!!error || undefined"
+        :aria-describedby="error ? `${id}-err` : undefined"
+        @input="onInput"
+        @focus="focused = true"
+        @blur="focused = false"
+      />
+      <span v-if="slots.suffix" class="suffix">
+        <slot name="suffix" />
+      </span>
+    </div>
     <p v-if="error" :id="`${id}-err`" class="error-text" role="alert">{{ error }}</p>
   </div>
 </template>
@@ -72,6 +87,7 @@ const onInput = (e: Event) => {
   position: absolute;
   left: var(--space-4);
   top: 18px;
+  z-index: 1;
   color: var(--color-on-surface-variant);
   font: var(--type-body-large-size) / 1 var(--font-sans);
   pointer-events: none;
@@ -125,6 +141,20 @@ const onInput = (e: Event) => {
 }
 .input:focus {
   outline: none;
+}
+
+.input-row {
+  position: relative;
+}
+.input.with-suffix {
+  padding-right: 48px;
+}
+.suffix {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-on-surface-variant);
 }
 
 .error-text {
