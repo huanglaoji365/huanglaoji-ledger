@@ -81,9 +81,104 @@ function loadSession(): SessionUser | null {
 
 const state = reactive<AuthState>({ session: loadSession() })
 
+/* ---------------- 密码哈希 ---------------- */
+
+/**
+ * SHA-256 纯 JS 实现（兜底：crypto.subtle 仅在安全上下文可用，
+ * 部分内嵌浏览器 / 非 https 环境为 undefined）。
+ * 输入为 UTF-8 字节展开的二进制字符串，输出与 SubtleCrypto.digest 一致。
+ */
+function sha256Sync(bin: string): string {
+  const rightRotate = (value: number, amount: number) => (value >>> amount) | (value << (32 - amount))
+  const maxWord = Math.pow(2, 32)
+
+  let ascii = bin
+  const asciiBitLength = ascii.length * 8
+  const words: number[] = []
+
+  const hash: number[] = []
+  const k: number[] = []
+  let primeCounter = 0
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    let isPrime = true
+    for (let factor = 2; factor * factor <= candidate; factor++) {
+      if (candidate % factor === 0) {
+        isPrime = false
+        break
+      }
+    }
+    if (isPrime) {
+      if (primeCounter < 8) hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0
+      k[primeCounter] = (Math.pow(candidate, 1 / 3) * maxWord) | 0
+      primeCounter++
+    }
+  }
+
+  ascii += '\x80'
+  while (ascii.length % 64 - 56) ascii += '\x00'
+  for (let i = 0; i < ascii.length; i++) {
+    const j = ascii.charCodeAt(i)
+    if (j >> 8) return ''
+    words[i >> 2] = (words[i >> 2] ?? 0) | (j << ((3 - (i % 4)) * 8))
+  }
+  words[words.length] = (asciiBitLength / maxWord) | 0
+  words[words.length] = asciiBitLength
+
+  for (let j = 0; j < words.length; ) {
+    const w = words.slice(j, (j += 16))
+    const oldHash = hash.slice(0)
+
+    for (let i = 0; i < 64; i++) {
+      const w15 = w[i - 15]
+      const w2 = w[i - 2]
+      const a = hash[0]!
+      const e = hash[4]!
+      const temp1 =
+        hash[7]! +
+        (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+        ((e & hash[5]!) ^ (~e & hash[6]!)) +
+        k[i]! +
+        (w[i] =
+          i < 16
+            ? w[i]!
+            : (w[i - 16]! +
+                (rightRotate(w15!, 7) ^ rightRotate(w15!, 18) ^ (w15! >>> 3)) +
+                w[i - 7]! +
+                (rightRotate(w2!, 17) ^ rightRotate(w2!, 19) ^ (w2! >>> 10))) |
+              0)
+      const temp2 =
+        (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+        ((a & hash[1]!) ^ (a & hash[2]!) ^ (hash[1]! & hash[2]!))
+
+      hash.unshift((temp1 + temp2) | 0)
+      hash.pop()
+      hash[4] = (hash[4]! + temp1) | 0
+    }
+
+    for (let i = 0; i < 8; i++) {
+      hash[i] = (hash[i]! + oldHash[i]!) | 0
+    }
+  }
+
+  let result = ''
+  for (let i = 0; i < 8; i++) {
+    for (let j = 3; j + 1; j--) {
+      const b = (hash[i]! >> (j * 8)) & 255
+      result += (b < 16 ? '0' : '') + b.toString(16)
+    }
+  }
+  return result
+}
+
 async function hashPassword(pw: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`hlj:${pw}`))
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  const bytes = new TextEncoder().encode(`hlj:${pw}`)
+  if (typeof crypto !== 'undefined' && crypto.subtle?.digest) {
+    const buf = await crypto.subtle.digest('SHA-256', bytes)
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  }
+  // 兜底：UTF-8 字节展开为二进制字符串后走纯 JS 摘要，结果与 subtle 版一致
+  const bin = Array.from(bytes, (b) => String.fromCharCode(b)).join('')
+  return sha256Sync(bin)
 }
 
 function signIn(username: string) {
