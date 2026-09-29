@@ -1,0 +1,421 @@
+/* ============================================================
+   Design Tokens — 黄老吉记账 Design System
+   STEP 1–4: Color / Typography / Spacing / Radius / Elevation
+   STEP 5  : Breakpoints & Motion & Z-index
+   所有页面与组件只允许引用这些 Token，禁止散写魔法值。
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  /* ----------------------------------------------------------
+     STEP 5 — Breakpoints（供 JS 与文档参考；CSS 内直接用媒体查询）
+     mobile  : < 600px
+     tablet  : 600px – 1023px
+     desktop : 1024px – 1439px
+     large   : >= 1440px
+     ---------------------------------------------------------- */
+  --bp-mobile: 600px;
+  --bp-tablet: 1024px;
+  --bp-large: 1440px;
+
+  /* ----------------------------------------------------------
+     App Shell 布局常量
+     ---------------------------------------------------------- */
+  --shell-sidebar-width: 280px;
+  --shell-rail-width: 88px;
+  --shell-bottomnav-height: 80px;
+  --shell-topbar-height: 64px;
+  --content-max-width: 1440px;
+
+  /* ----------------------------------------------------------
+     Z-index scale
+     ---------------------------------------------------------- */
+  --z-nav: 100;
+  --z-topbar: 200;
+  --z-fab: 300;
+  --z-scrim: 400;
+  --z-sheet: 500;
+  --z-toast: 600;
+  --z-tooltip: 700;
+
+  /* ----------------------------------------------------------
+     Motion Tokens（Material 3 Expressive：快速 / 自然 / 轻量）
+     ---------------------------------------------------------- */
+  --motion-instant: 0ms;
+  --motion-fast: 120ms;
+  --motion-short: 180ms;
+  --motion-medium: 260ms;
+  --motion-long: 380ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+  /* ----------------------------------------------------------
+     Spacing Tokens：4 8 12 16 20 24 32 40 48 64
+     ---------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ----------------------------------------------------------
+     Radius Tokens
+     ---------------------------------------------------------- */
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 16px;
+  --radius-extra-large: 28px;
+  --radius-full: 999px;
+
+  /* ----------------------------------------------------------
+     Elevation Tokens（level-0 ~ level-3）
+     ---------------------------------------------------------- */
+  --elevation-level-0: none;
+  --elevation-level-1: 0 1px 2px 0 rgb(0 0 0 / 0.18), 0 1px 3px 1px rgb(0 0 0 / 0.10);
+  --elevation-level-2: 0 1px 2px 0 rgb(0 0 0 / 0.20), 0 2px 6px 2px rgb(0 0 0 / 0.12);
+  --elevation-level-3: 0 2px 4px 0 rgb(0 0 0 / 0.20), 0 6px 12px 4px rgb(0 0 0 / 0.12);
+  --elevation-shadow-color: rgb(30 20 5 / 0.24);
+
+  /* ----------------------------------------------------------
+     Typography Tokens
+     display / headline / title / body / label
+     （font-size / font-weight / line-height / letter-spacing）
+     ---------------------------------------------------------- */
+  --font-sans: "Inter", "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei",
+    "Noto Sans SC", system-ui, -apple-system, sans-serif;
+  --font-num: "Inter", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+
+  /* display */
+  --type-display-large-size: 57px;
+  --type-display-large-weight: 500;
+  --type-display-large-line-height: 1.08;
+  --type-display-large-tracking: -0.5px;
+
+  --type-display-medium-size: 45px;
+  --type-display-medium-weight: 500;
+  --type-display-medium-line-height: 1.12;
+  --type-display-medium-tracking: -0.25px;
+
+  --type-display-small-size: 36px;
+  --type-display-small-weight: 500;
+  --type-display-small-line-height: 1.18;
+  --type-display-small-tracking: 0;
+
+  /* headline */
+  --type-headline-large-size: 32px;
+  --type-headline-large-weight: 500;
+  --type-headline-large-line-height: 1.22;
+  --type-headline-large-tracking: 0;
+
+  --type-headline-medium-size: 28px;
+  --type-headline-medium-weight: 500;
+  --type-headline-medium-line-height: 1.28;
+  --type-headline-medium-tracking: 0;
+
+  --type-headline-small-size: 24px;
+  --type-headline-small-weight: 500;
+  --type-headline-small-line-height: 1.33;
+  --type-headline-small-tracking: 0;
+
+  /* title */
+  --type-title-large-size: 22px;
+  --type-title-large-weight: 500;
+  --type-title-large-line-height: 1.3;
+  --type-title-large-tracking: 0;
+
+  --type-title-medium-size: 16px;
+  --type-title-medium-weight: 550;
+  --type-title-medium-line-height: 1.5;
+  --type-title-medium-tracking: 0.15px;
+
+  --type-title-small-size: 14px;
+  --type-title-small-weight: 550;
+  --type-title-small-line-height: 1.43;
+  --type-title-small-tracking: 0.1px;
+
+  /* body */
+  --type-body-large-size: 16px;
+  --type-body-large-weight: 400;
+  --type-body-large-line-height: 1.5;
+  --type-body-large-tracking: 0.1px;
+
+  --type-body-medium-size: 14px;
+  --type-body-medium-weight: 400;
+  --type-body-medium-line-height: 1.43;
+  --type-body-medium-tracking: 0.15px;
+
+  --type-body-small-size: 12px;
+  --type-body-small-weight: 400;
+  --type-body-small-line-height: 1.33;
+  --type-body-small-tracking: 0.3px;
+
+  /* label */
+  --type-label-large-size: 14px;
+  --type-label-large-weight: 550;
+  --type-label-large-line-height: 1.43;
+  --type-label-large-tracking: 0.1px;
+
+  --type-label-medium-size: 12px;
+  --type-label-medium-weight: 550;
+  --type-label-medium-line-height: 1.33;
+  --type-label-medium-tracking: 0.5px;
+
+  --type-label-small-size: 11px;
+  --type-label-small-weight: 550;
+  --type-label-small-line-height: 1.45;
+  --type-label-small-tracking: 0.5px;
+
+  /* ----------------------------------------------------------
+     STEP 1–2 — Color Tokens（Material 3 Expressive · 暖金主题）
+     使用 light-dark() 单点定义，主题切换由 color-scheme 驱动。
+     ---------------------------------------------------------- */
+
+  /* 主色 — 暖金（品牌：黄老吉） */
+  --color-primary: light-dark(#7a5900, #edc36a);
+  --color-on-primary: light-dark(#ffffff, #3f2e00);
+  --color-primary-container: light-dark(#ffdf9e, #5c4300);
+  --color-on-primary-container: light-dark(#261a00, #ffdf9e);
+  --color-primary-fixed-dim: light-dark(#e8bf55, #edc36a);
+
+  /* 次色 */
+  --color-secondary: light-dark(#6f5a3d, #d8c2a1);
+  --color-on-secondary: light-dark(#ffffff, #3d2e15);
+  --color-secondary-container: light-dark(#f6e3c8, #56442c);
+  --color-on-secondary-container: light-dark(#281a05, #f6e3c8);
+
+  /* 第三色 */
+  --color-tertiary: light-dark(#7d5260, #efb8a5);
+  --color-on-tertiary: light-dark(#ffffff, #44291f);
+  --color-tertiary-container: light-dark(#ffd8e4, #6c3f2f);
+  --color-on-tertiary-container: light-dark(#31111d, #ffd8e4);
+
+  /* 表面 */
+  --color-surface: light-dark(#fdf9f2, #17130c);
+  --color-surface-dim: light-dark(#ded8cc, #17130c);
+  --color-surface-container-lowest: light-dark(#ffffff, #120e07);
+  --color-surface-container-low: light-dark(#f8f2e8, #1f1b14);
+  --color-surface-container: light-dark(#f2ecdf, #231f17);
+  --color-surface-container-high: light-dark(#ece6d9, #2e2920);
+  --color-surface-container-highest: light-dark(#e7e0d2, #39342a);
+  --color-on-surface: light-dark(#201b10, #ebe1d3);
+  --color-on-surface-variant: light-dark(#4d4636, #d0c4b4);
+  --color-background: var(--color-surface);
+  --color-on-background: var(--color-on-surface);
+  --color-outline: light-dark(#807867, #998f7e);
+  --color-outline-variant: light-dark(#d1c5b1, #4d4639);
+  --color-scrim: rgb(0 0 0 / 0.45);
+
+  /* 语义色 — 收入（绿） */
+  --color-income: light-dark(#146c2e, #8bd8a0);
+  --color-on-income: light-dark(#ffffff, #00210a);
+  --color-income-container: light-dark(#c4eed0, #005324);
+  --color-on-income-container: light-dark(#002e15, #c4eed0);
+
+  /* 语义色 — 支出（橙红） */
+  --color-expense: light-dark(#b3261e, #ffb4a6);
+  --color-on-expense: light-dark(#ffffff, #5f1608);
+  --color-expense-container: light-dark(#ffdad3, #7d2a12);
+  --color-on-expense-container: light-dark(#410e08, #ffdad3);
+
+  /* 语义色 — 警告（橙黄） */
+  --color-warning: light-dark(#9a4a00, #ffb870);
+  --color-on-warning: light-dark(#ffffff, #472300);
+  --color-warning-container: light-dark(#ffdcc2, #6b3a00);
+  --color-on-warning-container: light-dark(#331b00, #ffdcc2);
+
+  /* 语义色 — 成功（深绿） */
+  --color-success: light-dark(#1f6c3c, #9bd6a4);
+  --color-on-success: light-dark(#ffffff, #003916);
+  --color-success-container: light-dark(#c0efc8, #005324);
+  --color-on-success-container: light-dark(#04331d, #c0efc8);
+
+  /* 错误 */
+  --color-error: light-dark(#ba1a1a, #ffb4ab);
+  --color-on-error: light-dark(#ffffff, #690005);
+  --color-error-container: light-dark(#ffdad6, #93000a);
+  --color-on-error-container: light-dark(#410002, #ffdad6);
+
+  /* 图表类别色板（分类颜色 / 图表系列，共 8 色；色 1 跟随主题色） */
+  --chart-color-1: var(--color-primary);
+  --chart-color-2: light-dark(#146c2e, #8bd8a0);
+  --chart-color-3: light-dark(#b3261e, #ff897d);
+  --chart-color-4: light-dark(#4169b0, #9db8e8);
+  --chart-color-5: light-dark(#6b5bb5, #b8aee8);
+  --chart-color-6: light-dark(#a04f77, #e0a9c3);
+  --chart-color-7: light-dark(#2f7d86, #86ccd4);
+  --chart-color-8: light-dark(#8c5a30, #d9ab7f);
+
+  /* 图表辅助 */
+  --chart-grid: light-dark(#e7e0d2, #39342a);
+  --chart-tooltip-bg: light-dark(#332d20, #ece6d9);
+  --chart-tooltip-fg: light-dark(#fdf9f2, #201b10);
+
+  /* ----------------------------------------------------------
+     焦点 / 状态层
+     ---------------------------------------------------------- */
+  --focus-ring-color: var(--color-primary);
+  --state-hover-opacity: 0.08;
+  --state-focus-opacity: 0.1;
+  --state-pressed-opacity: 0.12;
+  --state-selected-opacity: 0.14;
+}
+
+/* 主题切换：通过 color-scheme 驱动 light-dark() */
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+/* ============================================================
+   主题色预设（设置页「主题色」可选；默认 暖金 = 上方手调基准主题）
+   预设只声明 4 个品牌源色，其余角色（次色 / 表面 / 轮廓 / 图表辅助）
+   统一由下方派生块用 color-mix() 从品牌色相生成，
+   保证任意色相下整体色感协调；语义色（收入/支出/警告/成功）不变。
+   ============================================================ */
+html[data-hue] {
+  --color-primary: light-dark(var(--hlj-hue), var(--hlj-hue-dark));
+  --color-on-primary: light-dark(#ffffff, color-mix(in oklab, var(--hlj-hue) 32%, #1f1808));
+  --color-primary-container: var(--hlj-hue-container);
+  --color-on-primary-container: var(--hlj-hue-on-container);
+  --color-primary-fixed-dim: light-dark(color-mix(in oklab, var(--hlj-hue) 72%, #ffffff), var(--hlj-hue-dark));
+
+  --color-secondary: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 38%, #6b6257),
+    color-mix(in oklab, var(--hlj-hue-dark) 42%, #d3ccc1)
+  );
+  --color-on-secondary: light-dark(#ffffff, color-mix(in oklab, var(--hlj-hue) 34%, #241d12));
+  --color-secondary-container: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 17%, #f4eee4),
+    color-mix(in oklab, var(--hlj-hue-dark) 24%, #453f34)
+  );
+  --color-on-secondary-container: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 55%, #241a05),
+    color-mix(in oklab, var(--hlj-hue-dark) 12%, #f3ece2)
+  );
+
+  --color-surface: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 4%, #fffefb),
+    color-mix(in oklab, var(--hlj-hue-dark) 5%, #15130f)
+  );
+  --color-surface-dim: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 14%, #dcd7cc),
+    color-mix(in oklab, var(--hlj-hue-dark) 5%, #15130f)
+  );
+  --color-surface-container-lowest: light-dark(#ffffff, color-mix(in oklab, var(--hlj-hue-dark) 4%, #110f0b));
+  --color-surface-container-low: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 7%, #fbf8f1),
+    color-mix(in oklab, var(--hlj-hue-dark) 7%, #1e1b16)
+  );
+  --color-surface-container: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 10%, #f7f3ea),
+    color-mix(in oklab, var(--hlj-hue-dark) 9%, #232019)
+  );
+  --color-surface-container-high: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 14%, #f3eee4),
+    color-mix(in oklab, var(--hlj-hue-dark) 11%, #2e2a21)
+  );
+  --color-surface-container-highest: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 18%, #efe9de),
+    color-mix(in oklab, var(--hlj-hue-dark) 13%, #3a352b)
+  );
+  --color-on-surface: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 14%, #211d15),
+    color-mix(in oklab, var(--hlj-hue-dark) 12%, #ebe4d6)
+  );
+  --color-on-surface-variant: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 22%, #574f3e),
+    color-mix(in oklab, var(--hlj-hue-dark) 18%, #d1c9ba)
+  );
+  --color-outline: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 30%, #827a6a),
+    color-mix(in oklab, var(--hlj-hue-dark) 22%, #988e7c)
+  );
+  --color-outline-variant: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 17%, #d4cab7),
+    color-mix(in oklab, var(--hlj-hue-dark) 14%, #4b443a)
+  );
+
+  --chart-grid: var(--color-surface-container-highest);
+  --chart-tooltip-bg: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 20%, #2c2820),
+    color-mix(in oklab, var(--hlj-hue-dark) 12%, #eee8dc)
+  );
+  --chart-tooltip-fg: light-dark(
+    color-mix(in oklab, var(--hlj-hue) 10%, #fdf9f0),
+    color-mix(in oklab, var(--hlj-hue) 16%, #221d13)
+  );
+}
+
+html[data-hue="ocean"] {
+  --hlj-hue: #3a5ba9;
+  --hlj-hue-dark: #a9c6ff;
+  --hlj-hue-container: light-dark(#d8e2ff, #3c5383);
+  --hlj-hue-on-container: light-dark(#0c2153, #d8e2ff);
+}
+html[data-hue="forest"] {
+  --hlj-hue: #206c48;
+  --hlj-hue-dark: #9bd4a8;
+  --hlj-hue-container: light-dark(#b8f0c9, #0c5133);
+  --hlj-hue-on-container: light-dark(#00391f, #b8f0c9);
+}
+html[data-hue="aqua"] {
+  --hlj-hue: #1f6c7a;
+  --hlj-hue-dark: #8bd0de;
+  --hlj-hue-container: light-dark(#b2ecf7, #084f5c);
+  --hlj-hue-on-container: light-dark(#00363f, #b2ecf7);
+}
+html[data-hue="violet"] {
+  --hlj-hue: #6750a4;
+  --hlj-hue-dark: #cfbcff;
+  --hlj-hue-container: light-dark(#e9ddff, #4b3a8f);
+  --hlj-hue-on-container: light-dark(#241a4d, #e9ddff);
+}
+html[data-hue="wine"] {
+  --hlj-hue: #a03a40;
+  --hlj-hue-dark: #ffb3b1;
+  --hlj-hue-container: light-dark(#ffdad6, #86272c);
+  --hlj-hue-on-container: light-dark(#41000a, #ffdad6);
+}
+html[data-hue="graphite"] {
+  --hlj-hue: #55575e;
+  --hlj-hue-dark: #c3c6d0;
+  --hlj-hue-container: light-dark(#e1e2ec, #45464f);
+  --hlj-hue-on-container: light-dark(#181a23, #e1e2ec);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-instant: 0ms;
+    --motion-fast: 0ms;
+    --motion-short: 0ms;
+    --motion-medium: 0ms;
+    --motion-long: 0ms;
+  }
+}
+
+/* ============================================================
+   Typography 工具类（页面排版使用）
+   ============================================================ */
+.type-display-large { font: var(--type-display-large-weight) var(--type-display-large-size)/var(--type-display-large-line-height) var(--font-sans); letter-spacing: var(--type-display-large-tracking); }
+.type-display-medium { font: var(--type-display-medium-weight) var(--type-display-medium-size)/var(--type-display-medium-line-height) var(--font-sans); letter-spacing: var(--type-display-medium-tracking); }
+.type-display-small { font: var(--type-display-small-weight) var(--type-display-small-size)/var(--type-display-small-line-height) var(--font-sans); letter-spacing: var(--type-display-small-tracking); }
+.type-headline-large { font: var(--type-headline-large-weight) var(--type-headline-large-size)/var(--type-headline-large-line-height) var(--font-sans); letter-spacing: var(--type-headline-large-tracking); }
+.type-headline-medium { font: var(--type-headline-medium-weight) var(--type-headline-medium-size)/var(--type-headline-medium-line-height) var(--font-sans); letter-spacing: var(--type-headline-medium-tracking); }
+.type-headline-small { font: var(--type-headline-small-weight) var(--type-headline-small-size)/var(--type-headline-small-line-height) var(--font-sans); letter-spacing: var(--type-headline-small-tracking); }
+.type-title-large { font: var(--type-title-large-weight) var(--type-title-large-size)/var(--type-title-large-line-height) var(--font-sans); letter-spacing: var(--type-title-large-tracking); }
+.type-title-medium { font: var(--type-title-medium-weight) var(--type-title-medium-size)/var(--type-title-medium-line-height) var(--font-sans); letter-spacing: var(--type-title-medium-tracking); }
+.type-title-small { font: var(--type-title-small-weight) var(--type-title-small-size)/var(--type-title-small-line-height) var(--font-sans); letter-spacing: var(--type-title-small-tracking); }
+.type-body-large { font: var(--type-body-large-weight) var(--type-body-large-size)/var(--type-body-large-line-height) var(--font-sans); letter-spacing: var(--type-body-large-tracking); }
+.type-body-medium { font: var(--type-body-medium-weight) var(--type-body-medium-size)/var(--type-body-medium-line-height) var(--font-sans); letter-spacing: var(--type-body-medium-tracking); }
+.type-body-small { font: var(--type-body-small-weight) var(--type-body-small-size)/var(--type-body-small-line-height) var(--font-sans); letter-spacing: var(--type-body-small-tracking); }
+.type-label-large { font: var(--type-label-large-weight) var(--type-label-large-size)/var(--type-label-large-line-height) var(--font-sans); letter-spacing: var(--type-label-large-tracking); }
+.type-label-medium { font: var(--type-label-medium-weight) var(--type-label-medium-size)/var(--type-label-medium-line-height) var(--font-sans); letter-spacing: var(--type-label-medium-tracking); }
+.type-label-small { font: var(--type-label-small-weight) var(--type-label-small-size)/var(--type-label-small-line-height) var(--font-sans); letter-spacing: var(--type-label-small-tracking); }
+
+/* 金额数字：等宽数字，避免跳动 */
+.numeric { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
