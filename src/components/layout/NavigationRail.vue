@@ -3,12 +3,16 @@
  * NavigationRail — Tablet 导航栏（600–1023px）
  * 图标堆叠式导航；选中态为 M3 药丸指示器。
  */
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { NAV_ITEMS } from './navigation'
+import { visibleNavItems } from './navigation'
+import { useAuth } from '../../composables/useAuth'
 import BrandMark from './BrandMark.vue'
 import AppIcon from '../ui/AppIcon.vue'
 
 const route = useRoute()
+const { state: authState } = useAuth()
+const navItems = computed(() => visibleNavItems(authState.session?.role))
 
 const isActive = (r: string) =>
   r === '/' ? route.path === '/' : route.path.startsWith(r)
@@ -22,7 +26,7 @@ const isActive = (r: string) =>
 
     <nav class="nav" aria-label="主导航">
       <ul>
-        <li v-for="item in NAV_ITEMS" :key="item.route">
+        <li v-for="item in navItems" :key="item.route">
           <RouterLink
             :to="item.route"
             class="rail-item"

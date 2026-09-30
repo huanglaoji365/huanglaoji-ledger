@@ -4,6 +4,7 @@
 
 import { readonly, reactive } from 'vue'
 import type { Transaction } from '../data/types'
+import { useAuth } from './useAuth'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -70,13 +71,20 @@ function setTheme(mode: ThemeMode) {
   state.theme = mode
   localStorage.setItem(THEME_KEY, mode)
   applyTheme(mode)
+  // 登录状态下同步到云端偏好
+  void useAuth().savePrefs({ theme: mode })
 }
+
+let hueSyncTimer: ReturnType<typeof setTimeout> | null = null
 
 function setHue(hue: number) {
   const h = Math.round(Math.min(360, Math.max(0, hue)))
   state.hue = h
   localStorage.setItem(HUE_KEY, String(h))
   applyHue(h)
+  // 滑块拖动触发频繁，防抖后同步
+  if (hueSyncTimer) clearTimeout(hueSyncTimer)
+  hueSyncTimer = setTimeout(() => void useAuth().savePrefs({ hue: h }), 800)
 }
 
 function openAddSheet() {

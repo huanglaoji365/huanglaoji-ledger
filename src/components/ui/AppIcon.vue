@@ -48,6 +48,7 @@ const ICONS: Record<string, string> = {
   eye: '<path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/>',
   'eye-off': '<path d="M4 4l16 16"/><path d="M10.5 5.9A9.4 9.4 0 0 1 12 5.8c6 0 9.5 6.2 9.5 6.2a17.6 17.6 0 0 1-2.6 3.3M6.2 6.9A16.8 16.8 0 0 0 2.5 12S6 18.2 12 18.2a9.3 9.3 0 0 0 3.9-.8"/><path d="M9.9 9.9a2.8 2.8 0 0 0 4 4"/>',
   user: '<circle cx="12" cy="8.2" r="3.8"/><path d="M4.5 20.2a7.6 7.6 0 0 1 15 0"/>',
+  shield: '<path d="M12 3.5 5 6v5.2c0 4.3 3 8 7 9.3 4-1.3 7-5 7-9.3V6l-7-2.5Z"/><path d="m9 12 2 2 4-4.5"/>',
   key: '<circle cx="7.5" cy="16.5" r="4"/><path d="m10.5 13.5 9-9"/><path d="m16 8 3 3"/><path d="m13.5 10.5 2 2"/>',
   list: '<path d="M8.5 6H21M8.5 12H21M8.5 18H21"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',

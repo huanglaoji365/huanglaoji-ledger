@@ -1,15 +1,12 @@
 /* ============================================================
-   Ledger Store — 全局账本状态（reactive 单例）
-   数据（seed）与 UI 完全分离；组件只通过 store 读写数据。
+   Ledger Store — 全局账本状态（后端版）
+   登录后从 /api 拉取数据；增删改先同步服务端再更新本地，
+   账户余额以服务端计算为准（交易变动后刷新账户列表）。
    ============================================================ */
 
 import { computed, reactive, readonly } from 'vue'
-import {
-  ACCOUNTS,
-  BUDGETS,
-  buildSeedTransactions,
-  CATEGORIES,
-} from '../data/seed'
+import { api } from '../api/client'
+import { useUi } from './useUi'
 import type {
   Account,
   Budget,
@@ -27,14 +24,62 @@ interface LedgerState {
   categories: Category[]
   accounts: Account[]
   budgets: Budget[]
+  /** 首次数据加载完成标记 */
+  loaded: boolean
 }
 
 const state = reactive<LedgerState>({
-  transactions: buildSeedTransactions(),
-  categories: [...CATEGORIES],
-  accounts: [...ACCOUNTS],
-  budgets: [...BUDGETS],
+  transactions: [],
+  categories: [],
+  accounts: [],
+  budgets: [],
+  loaded: false,
 })
+
+/* ---------------- 数据加载 ---------------- */
+
+let loadSeq = 0
+
+async function loadAll(): Promise<void> {
+  const seq = ++loadSeq
+  try {
+    const [categories, accounts, budgets, transactions] = await Promise.all([
+      api<Category[]>('/categories'),
+      api<Account[]>('/accounts'),
+      api<Budget[]>('/budgets'),
+      api<Transaction[]>('/transactions'),
+    ])
+    if (seq !== loadSeq) return // 已有更新的加载，丢弃旧结果
+    state.categories = categories
+    state.accounts = accounts
+    state.budgets = budgets
+    state.transactions = transactions
+    state.loaded = true
+  } catch (e) {
+    if (seq === loadSeq) useUi().toast(e instanceof Error ? e.message : '数据加载失败')
+  }
+}
+
+function clear(): void {
+  loadSeq++
+  state.transactions = []
+  state.categories = []
+  state.accounts = []
+  state.budgets = []
+  state.loaded = false
+}
+
+async function refreshAccounts(): Promise<void> {
+  try {
+    state.accounts = await api<Account[]>('/accounts')
+  } catch {
+    /* 余额刷新失败不打断交互，下次操作会再刷 */
+  }
+}
+
+function reportError(e: unknown, fallback: string): void {
+  useUi().toast(e instanceof Error ? e.message : fallback)
+}
 
 /* ---------------- 字典 ---------------- */
 
@@ -163,87 +208,122 @@ function recentTransactions(limit: number): Transaction[] {
 
 const netWorth = computed(() => state.accounts.reduce((s, a) => s + a.balance, 0))
 
-/* ---------------- 操作 ---------------- */
+/* ---------------- 操作（先同步服务端，成功后更新本地） ---------------- */
 
-let uid = 0
-const genId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${++uid}`
-
-function addTransaction(data: NewTransaction): Transaction {
-  const t: Transaction = { ...data, id: genId('tx') }
-  state.transactions.unshift(t)
-
-  // 账户余额联动：支出扣减、收入增加；信用卡支出增加负债
-  const acc = state.accounts.find((a) => a.id === t.account)
-  if (acc) {
-    acc.balance += t.type === 'income' ? t.amount : -t.amount
+async function addTransaction(data: NewTransaction): Promise<Transaction | undefined> {
+  try {
+    const t = await api<Transaction>('/transactions', { method: 'POST', body: data })
+    state.transactions.unshift(t)
+    void refreshAccounts()
+    return t
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+    return undefined
   }
-  return t
 }
 
-function deleteTransaction(id: string): void {
-  const idx = state.transactions.findIndex((t) => t.id === id)
-  if (idx === -1) return
-  const t = state.transactions[idx]
-  const acc = state.accounts.find((a) => a.id === t.account)
-  if (acc) {
-    acc.balance += t.type === 'income' ? -t.amount : t.amount
+async function deleteTransaction(id: string): Promise<void> {
+  try {
+    await api(`/transactions/${id}`, { method: 'DELETE' })
+    const idx = state.transactions.findIndex((t) => t.id === id)
+    if (idx !== -1) state.transactions.splice(idx, 1)
+    void refreshAccounts()
+  } catch (e) {
+    reportError(e, '删除失败，请重试')
   }
-  state.transactions.splice(idx, 1)
 }
 
-function updateTransaction(id: string, patch: Partial<NewTransaction>): void {
-  const idx = state.transactions.findIndex((t) => t.id === id)
-  if (idx === -1) return
-  const old = state.transactions[idx]
-  const acc = state.accounts.find((a) => a.id === old.account)
-  if (acc) acc.balance += old.type === 'income' ? -old.amount : old.amount
-  const next: Transaction = { ...old, ...patch }
-  state.transactions[idx] = next
-  const acc2 = state.accounts.find((a) => a.id === next.account)
-  if (acc2) acc2.balance += next.type === 'income' ? next.amount : -next.amount
+async function updateTransaction(id: string, patch: Partial<NewTransaction>): Promise<void> {
+  try {
+    const updated = await api<Transaction>(`/transactions/${id}`, { method: 'PATCH', body: patch })
+    const idx = state.transactions.findIndex((t) => t.id === id)
+    if (idx !== -1) state.transactions[idx] = updated
+    void refreshAccounts()
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+  }
 }
 
-function addBudget(data: Omit<Budget, 'id'>): void {
+async function addBudget(data: Omit<Budget, 'id'>): Promise<void> {
   if (state.budgets.some((b) => b.category === data.category)) return
-  state.budgets.push({ ...data, id: genId('bud') })
+  try {
+    const b = await api<Budget>('/budgets', { method: 'POST', body: data })
+    state.budgets.push(b)
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+  }
 }
 
-function updateBudget(id: string, patch: Partial<Budget>): void {
-  const b = state.budgets.find((x) => x.id === id)
-  if (b) Object.assign(b, patch)
+async function updateBudget(id: string, patch: Partial<Budget>): Promise<void> {
+  try {
+    const updated = await api<Budget>(`/budgets/${id}`, { method: 'PATCH', body: patch })
+    const idx = state.budgets.findIndex((x) => x.id === id)
+    if (idx !== -1) state.budgets[idx] = updated
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+  }
 }
 
-function deleteBudget(id: string): void {
-  const idx = state.budgets.findIndex((b) => b.id === id)
-  if (idx !== -1) state.budgets.splice(idx, 1)
+async function deleteBudget(id: string): Promise<void> {
+  try {
+    await api(`/budgets/${id}`, { method: 'DELETE' })
+    const idx = state.budgets.findIndex((b) => b.id === id)
+    if (idx !== -1) state.budgets.splice(idx, 1)
+  } catch (e) {
+    reportError(e, '删除失败，请重试')
+  }
 }
 
-function addCategory(data: Omit<Category, 'id'>): Category {
-  const c: Category = { ...data, id: genId('cat') }
-  state.categories.push(c)
-  return c
+async function addCategory(data: Omit<Category, 'id'>): Promise<Category | undefined> {
+  try {
+    const c = await api<Category>('/categories', { method: 'POST', body: data })
+    state.categories.push(c)
+    return c
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+    return undefined
+  }
 }
 
-function deleteCategory(id: string): void {
-  const idx = state.categories.findIndex((c) => c.id === id)
-  if (idx !== -1) state.categories.splice(idx, 1)
-  state.budgets = state.budgets.filter((b) => b.category !== id)
+async function deleteCategory(id: string): Promise<void> {
+  try {
+    await api(`/categories/${id}`, { method: 'DELETE' })
+    state.categories = state.categories.filter((c) => c.id !== id)
+    state.budgets = state.budgets.filter((b) => b.category !== id)
+  } catch (e) {
+    reportError(e, '删除失败，请重试')
+  }
 }
 
-function addAccount(data: Omit<Account, 'id'>): Account {
-  const a: Account = { ...data, id: genId('acc') }
-  state.accounts.push(a)
-  return a
+async function addAccount(data: Omit<Account, 'id'>): Promise<Account | undefined> {
+  try {
+    const a = await api<Account>('/accounts', { method: 'POST', body: data })
+    state.accounts.push(a)
+    return a
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+    return undefined
+  }
 }
 
-function updateAccount(id: string, patch: Partial<Account>): void {
-  const a = state.accounts.find((x) => x.id === id)
-  if (a) Object.assign(a, patch)
+async function updateAccount(id: string, patch: Partial<Account>): Promise<void> {
+  try {
+    const updated = await api<Account>(`/accounts/${id}`, { method: 'PATCH', body: patch })
+    const idx = state.accounts.findIndex((x) => x.id === id)
+    if (idx !== -1) state.accounts[idx] = updated
+  } catch (e) {
+    reportError(e, '保存失败，请重试')
+  }
 }
 
-function deleteAccount(id: string): void {
-  const idx = state.accounts.findIndex((a) => a.id === id)
-  if (idx !== -1) state.accounts.splice(idx, 1)
+async function deleteAccount(id: string): Promise<void> {
+  try {
+    await api(`/accounts/${id}`, { method: 'DELETE' })
+    const idx = state.accounts.findIndex((a) => a.id === id)
+    if (idx !== -1) state.accounts.splice(idx, 1)
+  } catch (e) {
+    reportError(e, '删除失败，请重试')
+  }
 }
 
 /** 导出 JSON（设置页） */
@@ -287,6 +367,9 @@ export function useLedger() {
     budgetsWithProgress,
     recentTransactions,
     netWorth,
+    loadAll,
+    clear,
+    refreshAccounts,
     addTransaction,
     deleteTransaction,
     updateTransaction,

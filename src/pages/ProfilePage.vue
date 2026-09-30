@@ -113,10 +113,23 @@ async function saveProfile() {
     return
   }
   savingProfile.value = true
-  auth.updateProfile({ displayName: name, avatar: avatarSrc.value ?? null, email: email || null, phone: phone || null })
-  savingProfile.value = false
-  refreshBound()
-  ui.toast('个人信息已保存')
+  try {
+    await auth.updateProfile({
+      displayName: name,
+      avatar: avatarSrc.value ?? null,
+      email: email || null,
+      phone: phone || null,
+    })
+    refreshBound()
+    ui.toast('个人信息已保存')
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : '保存失败，请重试'
+    if (msg.includes('邮箱')) emailError.value = msg
+    else if (msg.includes('手机号')) phoneError.value = msg
+    else ui.toast(msg)
+  } finally {
+    savingProfile.value = false
+  }
 }
 
 /* ---------------- 解绑 / 换绑 ---------------- */
@@ -169,17 +182,22 @@ async function confirmUnbind() {
     unbindSubmitting.value = false
     return
   }
-  if (pendingUnbind.value === 'email') {
-    contacts.email = ''
-    auth.updateProfile({ email: null })
-  } else {
-    contacts.phone = ''
-    auth.updateProfile({ phone: null })
+  try {
+    if (pendingUnbind.value === 'email') {
+      contacts.email = ''
+      await auth.updateProfile({ email: null })
+    } else {
+      contacts.phone = ''
+      await auth.updateProfile({ phone: null })
+    }
+    refreshBound()
+    unbindOpen.value = false
+    ui.toast(`${unbindLabel.value}已解绑`)
+  } catch (e) {
+    unbindError.value = e instanceof Error ? e.message : '解绑失败'
+  } finally {
+    unbindSubmitting.value = false
   }
-  refreshBound()
-  unbindSubmitting.value = false
-  unbindOpen.value = false
-  ui.toast(`${unbindLabel.value}已解绑`)
 }
 
 /* ---------------- 修改密码 ---------------- */

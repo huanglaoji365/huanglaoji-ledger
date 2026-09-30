@@ -8,6 +8,7 @@ import type { Account } from '../../data/types'
 import { formatAmount } from '../../data/format'
 import AppIcon from '../ui/AppIcon.vue'
 import AmountText from '../ui/AmountText.vue'
+import IconButton from '../ui/IconButton.vue'
 
 const props = defineProps<{
   account: Account

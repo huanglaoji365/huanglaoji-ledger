@@ -54,6 +54,12 @@ export const router = createRouter({
       component: () => import('../pages/SettingsPage.vue'),
       meta: { title: '设置' },
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../pages/AdminPage.vue'),
+      meta: { title: '管理后台', adminOnly: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior() {
@@ -61,13 +67,24 @@ export const router = createRouter({
   },
 })
 
-router.beforeEach((to) => {
+let bootstrapped = false
+
+router.beforeEach(async (to) => {
+  const auth = useAuth()
+  if (!bootstrapped) {
+    bootstrapped = true
+    // 有 token 时先恢复会话，避免刷新页面后被误踢到登录页
+    await auth.bootstrap()
+  }
   const { state } = useAuth()
-  if (!state.session && to.name !== 'login') {
+  if (!state.session && !state.booting && to.name !== 'login') {
     // 未登录：跳登录页，登录后回跳原地址
     return { name: 'login', query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined }
   }
   if (state.session && to.name === 'login') {
+    return { path: '/' }
+  }
+  if (to.meta.adminOnly && state.session?.role !== 'admin') {
     return { path: '/' }
   }
 })

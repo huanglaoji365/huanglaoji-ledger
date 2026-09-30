@@ -1,13 +1,12 @@
 <script setup lang="ts">
 /**
  * LoginPage — 登录 / 注册 / 找回密码（公开页，无 AppShell）
- * 演示版鉴权：账号保存在本机浏览器；接入 FastAPI 后替换为 API 调用，
- * 找回密码届时切换为邮箱 / 短信验证码通道。
+ * 注册与找回密码均为邮箱验证码流程：发码 → 验码 → 完成。
  * 支持 ?redirect= 登录后回跳、?u= 切换账号时预填用户名。
  */
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuth, isEmail, isPhone, maskEmail, maskPhone } from '../composables/useAuth'
+import { useAuth, isEmail, isPhone } from '../composables/useAuth'
 import { useUi, type ThemeMode } from '../composables/useUi'
 import AppCard from '../components/ui/AppCard.vue'
 import AppButton from '../components/ui/AppButton.vue'
@@ -32,6 +31,7 @@ const form = reactive({
   password: '',
   confirm: '',
   email: '',
+  code: '',
   phone: '',
 })
 const errors = reactive({
@@ -40,33 +40,67 @@ const errors = reactive({
   password: '',
   confirm: '',
   email: '',
+  code: '',
   phone: '',
 })
 
+/* ---------------- 验证码发送（注册 / 找回共用倒计时） ---------------- */
+
+const CODE_RESEND_SECONDS = 60
+const resendLeft = ref(0)
+let resendTimer: ReturnType<typeof setInterval> | null = null
+
+const resendLabel = computed(() => (resendLeft.value > 0 ? `${resendLeft.value}s 后重发` : '获取验证码'))
+
+function startResendCountdown() {
+  resendLeft.value = CODE_RESEND_SECONDS
+  resendTimer = setInterval(() => {
+    resendLeft.value--
+    if (resendLeft.value <= 0 && resendTimer) {
+      clearInterval(resendTimer)
+      resendTimer = null
+    }
+  }, 1000)
+}
+
+onUnmounted(() => {
+  if (resendTimer) clearInterval(resendTimer)
+})
+
+async function sendRegisterCode() {
+  if (resendLeft.value > 0) return
+  if (!isEmail(form.email)) {
+    errors.email = '请先填写正确的邮箱'
+    return
+  }
+  errors.email = ''
+  errors.code = ''
+  try {
+    const devCode = await auth.sendRegisterCode(form.email)
+    ui.toast(devCode ? `验证码已发送：${devCode}（开发模式）` : `验证码已发送至 ${form.email}`, { duration: 8000 })
+    startResendCountdown()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : '发送失败，请重试'
+    if (msg.includes('邮箱')) errors.email = msg
+    else errors.code = msg
+    ui.toast(msg)
+  }
+}
+
 /* ---------------- 找回密码 ---------------- */
 
-const recovery = reactive({ username: '', contact: '', next: '', confirm: '' })
+const recovery = reactive({ username: '', email: '', code: '', next: '', confirm: '' })
 const recoveryStep = ref<1 | 2>(1)
-const recoveryHint = ref<{ email?: string; phone?: string } | null>(null)
-const recoveryErrors = reactive({ username: '', contact: '', next: '', confirm: '' })
-
-const maskedHint = computed(() => {
-  const h = recoveryHint.value
-  if (!h) return []
-  const list: string[] = []
-  if (h.email) list.push(`绑定邮箱：${maskEmail(h.email)}`)
-  if (h.phone) list.push(`绑定手机号：${maskPhone(h.phone)}`)
-  return list
-})
+const recoveryErrors = reactive({ username: '', email: '', code: '', next: '', confirm: '' })
 
 function startRecovery() {
   mode.value = 'recovery'
   recoveryStep.value = 1
   recovery.username = form.username
-  recovery.contact = ''
+  recovery.email = ''
+  recovery.code = ''
   recovery.next = ''
   recovery.confirm = ''
-  recoveryHint.value = null
   clearErrors()
 }
 
@@ -87,9 +121,11 @@ function clearErrors() {
   errors.password = ''
   errors.confirm = ''
   errors.email = ''
+  errors.code = ''
   errors.phone = ''
   recoveryErrors.username = ''
-  recoveryErrors.contact = ''
+  recoveryErrors.email = ''
+  recoveryErrors.code = ''
   recoveryErrors.next = ''
   recoveryErrors.confirm = ''
 }
@@ -108,9 +144,10 @@ function validateRegister(): boolean {
   }
   if (form.password.length < 6) errors.password = '密码至少 6 位'
   if (form.confirm !== form.password) errors.confirm = '两次输入的密码不一致'
-  if (form.email && !isEmail(form.email)) errors.email = '邮箱格式不正确'
+  if (!isEmail(form.email)) errors.email = '请填写正确的邮箱，用于接收验证码'
+  if (!form.code.trim()) errors.code = '请输入邮箱验证码'
   if (form.phone && !isPhone(form.phone)) errors.phone = '手机号格式不正确'
-  return !errors.username && !errors.password && !errors.confirm && !errors.email && !errors.phone
+  return !errors.username && !errors.password && !errors.confirm && !errors.email && !errors.code && !errors.phone
 }
 
 async function submit() {
@@ -140,6 +177,7 @@ async function submit() {
         displayName: form.displayName,
         password: form.password,
         email: form.email,
+        code: form.code,
         phone: form.phone,
       })
       afterAuth('register')
@@ -157,21 +195,16 @@ async function submit() {
       recoveryErrors.username = '请输入用户名'
       return
     }
-    const hint = auth.getRecoveryHint(recovery.username)
-    if (!hint) {
-      recoveryErrors.username = '账号不存在'
-      return
-    }
-    if (!hint.email && !hint.phone) {
-      recoveryErrors.username = '该账号未绑定邮箱或手机号，无法自助找回'
-      return
-    }
-    recoveryHint.value = hint
+    // 用户名存在即进入第二步，具体校验在发码时进行（不暴露账号是否存在）
     recoveryStep.value = 2
     return
   }
-  if (!recovery.contact.trim()) {
-    recoveryErrors.contact = '请输入绑定的邮箱或手机号'
+  if (!isEmail(recovery.email)) {
+    recoveryErrors.email = '请输入该账号绑定的邮箱'
+    return
+  }
+  if (!recovery.code.trim()) {
+    recoveryErrors.code = '请输入邮箱验证码'
     return
   }
   if (recovery.next.length < 6) {
@@ -185,16 +218,36 @@ async function submit() {
   submitting.value = true
   try {
     await auth.resetPassword({
-      username: recovery.username,
-      contact: recovery.contact,
+      email: recovery.email,
+      code: recovery.code,
       newPassword: recovery.next,
     })
     ui.toast('密码已重置，请使用新密码登录')
     backToLogin()
   } catch (e) {
-    recoveryErrors.contact = e instanceof Error ? e.message : '重置失败'
+    recoveryErrors.code = e instanceof Error ? e.message : '重置失败'
+    ui.toast(e instanceof Error ? e.message : '重置失败')
   } finally {
     submitting.value = false
+  }
+}
+
+async function sendRecoveryCode() {
+  if (resendLeft.value > 0) return
+  if (!isEmail(recovery.email)) {
+    recoveryErrors.email = '请先填写正确的邮箱'
+    return
+  }
+  recoveryErrors.email = ''
+  recoveryErrors.code = ''
+  try {
+    const devCode = await auth.sendResetCode({ username: recovery.username, email: recovery.email })
+    ui.toast(devCode ? `验证码已发送：${devCode}（开发模式）` : `验证码已发送至 ${recovery.email}`, { duration: 8000 })
+    startResendCountdown()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : '发送失败，请重试'
+    recoveryErrors.email = msg
+    ui.toast(msg)
   }
 }
 
@@ -361,15 +414,33 @@ onMounted(() => {
             />
             <AppInput
               v-model="form.email"
-              label="邮箱（用于找回密码，可选）"
+              label="邮箱（必填，用于接收验证码）"
               :maxlength="40"
               :error="errors.email"
               inputmode="email"
               autocomplete="email"
             />
             <AppInput
+              v-model="form.code"
+              label="邮箱验证码"
+              :maxlength="6"
+              :error="errors.code"
+              inputmode="numeric"
+            >
+              <template #suffix>
+                <button
+                  type="button"
+                  class="code-btn"
+                  :disabled="resendLeft > 0"
+                  @click="sendRegisterCode"
+                >
+                  {{ resendLabel }}
+                </button>
+              </template>
+            </AppInput>
+            <AppInput
               v-model="form.phone"
-              label="手机号（用于找回密码，可选）"
+              label="手机号（可选）"
               :maxlength="11"
               :error="errors.phone"
               inputmode="tel"
@@ -389,19 +460,36 @@ onMounted(() => {
                 :maxlength="20"
                 :error="recoveryErrors.username"
               />
-              <p class="recovery-hint">将展示该账号绑定的邮箱 / 手机号（部分打码），验证匹配后即可重置密码。</p>
+              <p class="recovery-hint">下一步将向该账号绑定的邮箱发送验证码，验证通过后即可重置密码。</p>
               <AppButton type="submit" variant="filled" size="lg" block :loading="submitting">下一步</AppButton>
             </template>
             <template v-else>
-              <ul class="hint-list">
-                <li v-for="line in maskedHint" :key="line">{{ line }}</li>
-              </ul>
               <AppInput
-                v-model="recovery.contact"
-                label="输入完整邮箱或手机号"
+                v-model="recovery.email"
+                label="绑定邮箱"
                 :maxlength="40"
-                :error="recoveryErrors.contact"
+                :error="recoveryErrors.email"
+                inputmode="email"
+                autocomplete="email"
               />
+              <AppInput
+                v-model="recovery.code"
+                label="邮箱验证码"
+                :maxlength="6"
+                :error="recoveryErrors.code"
+                inputmode="numeric"
+              >
+                <template #suffix>
+                  <button
+                    type="button"
+                    class="code-btn"
+                    :disabled="resendLeft > 0"
+                    @click="sendRecoveryCode"
+                  >
+                    {{ resendLabel }}
+                  </button>
+                </template>
+              </AppInput>
               <AppInput
                 v-model="recovery.next"
                 label="新密码（至少 6 位）"
@@ -436,7 +524,7 @@ onMounted(() => {
       </AppCard>
 
       <p class="hint">
-        {{ mode === 'register' ? '注册后数据保存在本机浏览器；接入后端后自动同步到云端。' : '演示环境：账号数据保存在本机浏览器。' }}
+        {{ mode === 'register' ? '注册后账本数据自动同步到云端，换设备登录也不丢。' : '' }}
       </p>
     </div>
   </div>
@@ -568,15 +656,17 @@ onMounted(() => {
   font: var(--type-body-small-size) / 1.6 var(--font-sans);
   color: var(--color-on-surface-variant);
 }
-.hint-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-medium);
-  background: var(--color-surface-container-high);
-  font: var(--type-body-small-size) / 1.6 var(--font-sans);
-  color: var(--color-on-surface);
+
+.code-btn {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-small);
+  color: var(--color-primary);
+  font: var(--type-label-medium-size) / 1.4 var(--font-sans);
+  white-space: nowrap;
+}
+.code-btn:disabled {
+  color: var(--color-on-surface-variant);
+  opacity: 0.6;
 }
 
 .hint {

@@ -5,8 +5,9 @@
  */
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { NAV_ITEMS } from './navigation'
+import { visibleNavItems } from './navigation'
 import { useLedger } from '../../composables/useLedger'
+import { useAuth } from '../../composables/useAuth'
 import { formatAmount } from '../../data/format'
 import BrandMark from './BrandMark.vue'
 import UserMenu from './UserMenu.vue'
@@ -14,6 +15,8 @@ import AppIcon from '../ui/AppIcon.vue'
 
 const route = useRoute()
 const { netWorth } = useLedger()
+const { state: authState } = useAuth()
+const navItems = computed(() => visibleNavItems(authState.session?.role))
 
 const isActive = (r: string) =>
   r === '/' ? route.path === '/' : route.path.startsWith(r)
@@ -29,7 +32,7 @@ const netWorthText = computed(() => formatAmount(netWorth.value))
 
     <nav class="nav" aria-label="主导航">
       <ul>
-        <li v-for="item in NAV_ITEMS" :key="item.route">
+        <li v-for="item in navItems" :key="item.route">
           <RouterLink
             :to="item.route"
             class="nav-item state-layer"

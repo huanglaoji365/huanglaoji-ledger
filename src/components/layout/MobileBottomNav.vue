@@ -6,15 +6,18 @@
  */
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { NAV_ITEMS } from './navigation'
+import { visibleNavItems } from './navigation'
+import { useAuth } from '../../composables/useAuth'
 import AppIcon from '../ui/AppIcon.vue'
 import BottomSheet from '../ui/BottomSheet.vue'
 
 const route = useRoute()
 const moreOpen = ref(false)
+const { state: authState } = useAuth()
+const role = computed(() => authState.session?.role)
 
-const primaryItems = computed(() => NAV_ITEMS.filter((i) => i.primary))
-const secondaryItems = computed(() => NAV_ITEMS.filter((i) => !i.primary))
+const primaryItems = computed(() => visibleNavItems(role.value).filter((i) => i.primary))
+const secondaryItems = computed(() => visibleNavItems(role.value).filter((i) => !i.primary))
 
 const isActive = (r: string) =>
   r === '/' ? route.path === '/' : route.path.startsWith(r)

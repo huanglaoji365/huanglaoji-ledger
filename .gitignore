@@ -15,3 +15,12 @@ dist/
 # 操作系统 / 编辑器
 .DS_Store
 Thumbs.db
+
+# 后端（server/）
+__pycache__/
+*.pyc
+server/hlj.db
+server/hlj.db-journal
+
+# 环境变量模板需要提交
+!server/.env.example
